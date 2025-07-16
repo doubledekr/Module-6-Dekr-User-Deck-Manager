@@ -5,17 +5,14 @@ interface StockItemProps {
 }
 
 export default function StockItem({ stock }: StockItemProps) {
-  // Mock stock data - in production, this would come from real market data
-  const mockPrices: Record<string, any> = {
-    AAPL: { price: 189.43, change: 4.32, changePercent: 2.4 },
-    MSFT: { price: 408.12, change: 7.21, changePercent: 1.8 },
-    TSLA: { price: 235.87, change: -7.89, changePercent: -3.2 },
-    GOOGL: { price: 142.56, change: 2.45, changePercent: 1.7 },
-    AMZN: { price: 155.23, change: -1.24, changePercent: -0.8 },
-    NVDA: { price: 742.89, change: 30.15, changePercent: 4.2 },
-  };
-
-  const priceData = mockPrices[stock.symbol] || {
+  // Use real market data if available, otherwise fall back to mock data
+  const marketData = stock.marketData;
+  
+  const priceData = marketData ? {
+    price: marketData.price,
+    change: marketData.change,
+    changePercent: marketData.changePercent
+  } : {
     price: 100.00,
     change: 0,
     changePercent: 0
@@ -26,6 +23,11 @@ export default function StockItem({ stock }: StockItemProps) {
   const bgColor = isPositive ? "bg-green-500" : "bg-red-500";
 
   const getCompanyName = (symbol: string) => {
+    if (marketData?.name) {
+      return marketData.name;
+    }
+    
+    // Fallback names for common stocks
     const names: Record<string, string> = {
       AAPL: "Apple Inc.",
       MSFT: "Microsoft Corp.",

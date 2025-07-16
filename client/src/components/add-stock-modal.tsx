@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import StockSearch from "@/components/stock-search";
 
 interface AddStockModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export default function AddStockModal({ isOpen, onClose, decks }: AddStockModalP
     targetPrice: "",
     stopLoss: "",
   });
+  const [showStockSearch, setShowStockSearch] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -86,6 +88,14 @@ export default function AddStockModal({ isOpen, onClose, decks }: AddStockModalP
     });
   };
 
+  const handleStockSelect = (stock: any) => {
+    setFormData(prev => ({
+      ...prev,
+      symbol: stock.symbol,
+    }));
+    setShowStockSearch(false);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="bg-[var(--dekr-card-bg)] border-[var(--dekr-border)] text-white">
@@ -96,15 +106,25 @@ export default function AddStockModal({ isOpen, onClose, decks }: AddStockModalP
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="symbol">Stock Symbol *</Label>
-            <Input
-              id="symbol"
-              type="text"
-              placeholder="e.g., AAPL"
-              value={formData.symbol}
-              onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
-              className="bg-[var(--dekr-dark-bg)] border-[var(--dekr-border)] text-white"
-              required
-            />
+            <div className="flex space-x-2">
+              <Input
+                id="symbol"
+                type="text"
+                placeholder="e.g., AAPL"
+                value={formData.symbol}
+                onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                className="bg-[var(--dekr-dark-bg)] border-[var(--dekr-border)] text-white flex-1"
+                required
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowStockSearch(true)}
+                className="bg-[var(--dekr-muted)]/10 border-[var(--dekr-border)] text-[var(--dekr-muted)] hover:bg-[var(--dekr-muted)]/20"
+              >
+                Search
+              </Button>
+            </div>
           </div>
 
           <div>
@@ -181,6 +201,12 @@ export default function AddStockModal({ isOpen, onClose, decks }: AddStockModalP
           </div>
         </form>
       </DialogContent>
+      
+      <StockSearch
+        isOpen={showStockSearch}
+        onClose={() => setShowStockSearch(false)}
+        onSelectStock={handleStockSelect}
+      />
     </Dialog>
   );
 }

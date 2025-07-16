@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
 import { insertDeckSchema, insertStockSchema, insertNotificationSchema, TIER_LIMITS, DataTier } from "@shared/schema";
+import { marketDataService } from "./market-data";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user session - in production, this would be handled by authentication middleware
@@ -122,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get deck stocks
+  // Get deck stocks with real-time market data
   app.get("/api/decks/:id/stocks", async (req, res) => {
     try {
       const user = await getCurrentUser();
@@ -138,7 +139,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const stocks = await storage.getDeckStocks(deckId);
-      res.json(stocks);
+      
+      // Enrich with real-time market data if available
+      if (marketDataService.isAvailable()) {
+        const enrichedStocks = await Promise.all(
+          stocks.map(async (stock) => {
+            try {
+              const marketData = await marketDataService.getStockQuote(stock.symbol);
+              return {
+                ...stock,
+                marketData: {
+                  name: marketData.name,
+                  price: marketData.price,
+                  change: marketData.change,
+                  changePercent: marketData.changePercent,
+                  sector: marketData.sector,
+                }
+              };
+            } catch (error) {
+              console.error(`Failed to get market data for ${stock.symbol}:`, error);
+              return stock;
+            }
+          })
+        );
+        res.json(enrichedStocks);
+      } else {
+        res.json(stocks);
+      }
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }
@@ -286,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mock stock search endpoint
+  // Real stock search endpoint using Polygon API
   app.get("/api/stocks/search", async (req, res) => {
     try {
       const query = req.query.q as string;
@@ -294,29 +321,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Mock stock data - in production, this would integrate with real market data APIs
-      const mockStocks = [
-        { symbol: "AAPL", name: "Apple Inc.", price: 189.43, change: 4.32, changePercent: 2.4, sector: "Technology" },
-        { symbol: "MSFT", name: "Microsoft Corporation", price: 408.12, change: 7.21, changePercent: 1.8, sector: "Technology" },
-        { symbol: "TSLA", name: "Tesla Inc.", price: 235.87, change: -7.89, changePercent: -3.2, sector: "Consumer Discretionary" },
-        { symbol: "GOOGL", name: "Alphabet Inc.", price: 142.56, change: 2.45, changePercent: 1.7, sector: "Technology" },
-        { symbol: "AMZN", name: "Amazon.com Inc.", price: 155.23, change: -1.24, changePercent: -0.8, sector: "Consumer Discretionary" },
-        { symbol: "NVDA", name: "NVIDIA Corporation", price: 742.89, change: 30.15, changePercent: 4.2, sector: "Technology" },
-        { symbol: "AMD", name: "Advanced Micro Devices", price: 124.56, change: 2.58, changePercent: 2.1, sector: "Technology" },
-      ];
+      if (!marketDataService.isAvailable()) {
+        return res.status(503).json({ error: "Market data service unavailable" });
+      }
 
-      const filteredStocks = mockStocks.filter(stock => 
-        stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
-      );
-
-      res.json(filteredStocks);
+      const stocks = await marketDataService.searchStocks(query, 10);
+      res.json(stocks);
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Stock search error:", error);
+      res.status(500).json({ error: "Failed to search stocks" });
     }
   });
 
-  // Get stock recommendations
+  // Get stock recommendations using real market data
   app.get("/api/recommendations", async (req, res) => {
     try {
       const user = await getCurrentUser();
@@ -324,43 +341,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "User not found" });
       }
 
-      // Mock recommendations - in production, this would use ML algorithms
-      const mockRecommendations = [
-        {
-          symbol: "AMD",
-          name: "Advanced Micro Devices",
-          price: 124.56,
-          change: 2.58,
-          changePercent: 2.1,
-          sector: "Technology",
-          confidence: "High",
-          reason: "Matches your tech focus",
-        },
-        {
-          symbol: "INTC",
-          name: "Intel Corporation",
-          price: 45.23,
-          change: 1.12,
-          changePercent: 2.5,
-          sector: "Technology",
-          confidence: "Medium",
-          reason: "Similar to your holdings",
-        },
-        {
-          symbol: "NFLX",
-          name: "Netflix Inc.",
-          price: 487.32,
-          change: -5.67,
-          changePercent: -1.2,
-          sector: "Communication Services",
-          confidence: "Medium",
-          reason: "Trending in your sector",
-        },
-      ];
+      if (!marketDataService.isAvailable()) {
+        return res.status(503).json({ error: "Market data service unavailable" });
+      }
 
-      res.json(mockRecommendations);
+      // Get top performing stocks as recommendations
+      const topStocks = await marketDataService.getTopStocks(6);
+      
+      // Format as recommendations with confidence and reason
+      const recommendations = topStocks.map(stock => ({
+        ...stock,
+        confidence: stock.changePercent > 5 ? "High" : stock.changePercent > 0 ? "Medium" : "Low",
+        reason: stock.changePercent > 0 ? "Strong performance today" : "Potential value opportunity",
+      }));
+
+      res.json(recommendations);
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Recommendations error:", error);
+      res.status(500).json({ error: "Failed to get recommendations" });
+    }
+  });
+
+  // Get real-time quote for a specific stock
+  app.get("/api/stocks/:symbol/quote", async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      
+      if (!marketDataService.isAvailable()) {
+        return res.status(503).json({ error: "Market data service unavailable" });
+      }
+
+      const quote = await marketDataService.getStockQuote(symbol);
+      res.json(quote);
+    } catch (error) {
+      console.error(`Quote error for ${req.params.symbol}:`, error);
+      res.status(500).json({ error: "Failed to get stock quote" });
     }
   });
 
