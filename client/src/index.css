@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+
+  /* Custom Dekr theme colors */
+  --dekr-dark-bg: hsl(225, 37%, 8%);
+  --dekr-secondary: hsl(227, 24%, 13%);
+  --dekr-card-bg: hsl(228, 18%, 17%);
+  --dekr-border: hsl(217, 19%, 27%);
+  --dekr-success: hsl(156, 100%, 39%);
+  --dekr-error: hsl(0, 84%, 67%);
+  --dekr-warning: hsl(37, 100%, 56%);
+  --dekr-muted: hsl(213, 17%, 55%);
+}
+
+.dark {
+  --background: hsl(225, 37%, 8%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(228, 18%, 17%);
+  --muted-foreground: hsl(213, 17%, 55%);
+  --popover: hsl(228, 18%, 17%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(228, 18%, 17%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(217, 19%, 27%);
+  --input: hsl(217, 19%, 27%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(228, 18%, 17%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(228, 18%, 17%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 84%, 67%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom Dekr styles */
+.dekr-dark {
+  background-color: var(--dekr-dark-bg);
+  color: white;
+}
+
+.dekr-secondary {
+  background-color: var(--dekr-secondary);
+}
+
+.dekr-card {
+  background-color: var(--dekr-card-bg);
+  border-color: var(--dekr-border);
+}
+
+.dekr-success {
+  color: var(--dekr-success);
+}
+
+.dekr-error {
+  color: var(--dekr-error);
+}
+
+.dekr-warning {
+  color: var(--dekr-warning);
+}
+
+.dekr-muted {
+  color: var(--dekr-muted);
+}
+
+/* Animation keyframes */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
