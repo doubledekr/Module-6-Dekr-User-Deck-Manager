@@ -82,6 +82,7 @@ export class MemStorage implements IStorage {
     const user: User = {
       id: this.currentUserId++,
       ...insertUser,
+      tier: insertUser.tier || 1,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -111,6 +112,10 @@ export class MemStorage implements IStorage {
     const deck: Deck = {
       id: this.currentDeckId++,
       ...insertDeck,
+      type: insertDeck.type || "watchlist",
+      description: insertDeck.description || null,
+      isPublic: insertDeck.isPublic || false,
+      settings: insertDeck.settings || {},
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -150,6 +155,14 @@ export class MemStorage implements IStorage {
     const stock: Stock = {
       id: this.currentStockId++,
       ...insertStock,
+      status: insertStock.status || "watching",
+      notes: insertStock.notes || null,
+      targetPrice: insertStock.targetPrice || null,
+      stopLoss: insertStock.stopLoss || null,
+      positionSize: insertStock.positionSize || null,
+      tags: insertStock.tags || [],
+      appliedStrategies: insertStock.appliedStrategies || [],
+      performanceData: insertStock.performanceData || {},
       addedAt: new Date(),
       lastUpdated: new Date(),
     };
@@ -181,6 +194,8 @@ export class MemStorage implements IStorage {
     const notification: Notification = {
       id: this.currentNotificationId++,
       ...insertNotification,
+      data: insertNotification.data || {},
+      isRead: insertNotification.isRead || false,
       createdAt: new Date(),
     };
     this.notifications.set(notification.id, notification);
@@ -209,6 +224,9 @@ export class MemStorage implements IStorage {
     const strategy: Strategy = {
       id: this.currentStrategyId++,
       ...insertStrategy,
+      description: insertStrategy.description || null,
+      config: insertStrategy.config || {},
+      isActive: insertStrategy.isActive !== undefined ? insertStrategy.isActive : true,
       createdAt: new Date(),
     };
     this.strategies.set(strategy.id, strategy);
